@@ -15,7 +15,7 @@ public class PointsUpdaterServlet extends HttpServlet {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        List<Data> points = AreaCheckServlet.getStorage().getList();
+        List<Data> points = AreaCheckServlet.getStorage(request).getList(request.getSession());
         response.getWriter().println(objectMapper.writeValueAsString(points));
     }
 }

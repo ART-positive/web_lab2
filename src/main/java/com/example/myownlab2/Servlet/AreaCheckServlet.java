@@ -14,20 +14,23 @@ import static com.example.myownlab2.myTools.Data.wasHit;
 
 @WebServlet(name = "AreaCheckServlet", value = "/AreaCheckServlet")
 public class AreaCheckServlet extends HttpServlet {
-    private static Storage storage;
+    @Override
+    public void init() {
+    }
 
-    public static Storage getStorage() {
+    public static Storage getStorage(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Storage storage = (Storage) session.getAttribute("storage");
+        if (storage == null) {
+            storage = new Storage();
+            session.setAttribute("storage", storage);
+        }
         return storage;
     }
 
     @Override
-    public void init() {
-        storage = new Storage();
-    }
-
-    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        LinkedList<Data> hits = storage.getList();
+        LinkedList<Data> hits = getStorage(request).getList(request.getSession());
         request.setAttribute("hitsFromServer", hits);
         request.getServletContext().getRequestDispatcher("/table.jsp").forward(request, response);
     }
@@ -39,7 +42,7 @@ public class AreaCheckServlet extends HttpServlet {
             double y = Double.parseDouble(request.getParameter("y"));
             double r = Double.parseDouble(request.getParameter("r"));
 
-            if (checkCoditions(r, x, y)) {
+            if (checkConditions(r, x, y)) {
                 returnTable(request, response, r, x, y);
             }
         } catch (NumberFormatException e) {
@@ -54,11 +57,14 @@ public class AreaCheckServlet extends HttpServlet {
         data.setX(x);
         data.setY(y);
         data.setHit(wasHit(x, y, r));
-        storage.add(data);
+
+        // Используем сессию для хранения точек
+        getStorage(request).add(request.getSession(), data);
+
         doGet(request, response);
     }
 
-    private static boolean checkCoditions(double r, double x, double y) {
+    private static boolean checkConditions(double r, double x, double y) {
         return 1 <= r && r <= 5 && -4 <= x && x <= 4 && -3 <= y && y <= 5;
     }
 }
